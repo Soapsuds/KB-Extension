@@ -1,0 +1,10 @@
+/* Target the specific warning messenger class */
+.messenger-body.cf.messenger-warning {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+.messenger-body.cf.messenger-error {
+    animation-duration: 0ms;
+}

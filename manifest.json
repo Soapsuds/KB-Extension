@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "SendPro Automation Tool",
+  "version": "0.3",
+  "description": "Automates actions on Pitney Bowes.",
+  "permissions": ["storage", "scripting", "activeTab"],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "toggle-automation": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Y",
+        "mac": "Command+Shift+Y"
+      },
+      "description": "Toggle Automation On/Off"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://healthcareutahedu.sendproenterprise.com/Composer/Runtime/Index/Pitney%20Bowes%201D*",
+        "https://healthcareutahedu.sendproenterprise.com/Composer/Runtime/Index/Pitney%20Bowes%202D%20Main"
+      ],
+      "css": ["style.css"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
