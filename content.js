@@ -33,10 +33,11 @@ const ERROR_CONTENT_SELECTOR = ".messenger-content";
 
 // 2d Scan field
 const SCAN_TEXT_AREA_ID = "#ShipTo-textArea";
-
+// 1d scan field
+const ORDER_ID = "#search-for-order-input"; // will need adjustment for 2d
 // zip code field
 const ZIP_CODE_ID = "#ship-to-zip";
-const ORDER_ID = "#search-for-order-input"; // will need adjustment for 2d
+
 
 // name
 const SHIP_TO_NAME_ID = "#ship-to-company";
@@ -62,6 +63,11 @@ let last_processed_name = "";
 // disable animations
 //jQuery.fx.off = true;
 
+const is2DVersion = window.location.href.includes("2D");
+let scan_field = order_id
+if (is2DVersion) {
+  scan_field = document.querySelector(SCAN_TEXT_AREA_ID);
+}
 /**
  * Formats and logs/copies the processed names list
  */
@@ -228,6 +234,30 @@ const updateIndicator = () => {
 };
 
 /**
+ * Reliably refocuses the scanner field by waiting for native app scripts to finish
+ * and grabbing a fresh reference to the DOM element.
+ */
+const refocusScanner = () => {
+  setTimeout(() => {
+    // 1. Re-evaluate the version just in case
+    const is2D = window.location.href.includes("2D");
+    
+    // 2. Determine the correct selector
+    const targetSelector = is2D ? SCAN_TEXT_AREA_ID : ORDER_ID;
+    
+    // 3. Query the DOM right now to avoid stale element references
+    const freshTargetElement = document.querySelector(targetSelector);
+    
+    if (freshTargetElement) {
+      freshTargetElement.focus();
+      console.log(`🎯 Focus enforced on ${targetSelector}`);
+    } else {
+      console.warn("Could not find scanner field to refocus.");
+    }
+  }, 350); // 350ms delay gives the UI time to finish transitioning
+};
+
+/**
  * Error Logic
  * This function scans for error messages and performs actions based on text.
  */
@@ -251,6 +281,7 @@ const handleErrors = () => {
         console.log("❌ Swiched to Overnight, reset print.");
         has_clicked_print_already = false;
       }
+      refocusScanner()
     }
     // Remove scale could not be read, not useful
     else if (errorText.includes("The USB Scale could not be read.")) {
@@ -276,7 +307,6 @@ const handleErrors = () => {
  * Main State Controller
  */
 const checkState = (printable) => {
-  console.log(scan_text_area.value)
   // Run the error handler first
   let error_report = handleErrors();
   if (error_report == 1) {
@@ -295,7 +325,7 @@ const checkState = (printable) => {
     has_clicked_print_already = false;
     commitOrderId();
     commitName();
-    //scan_text_area.focus()
+    refocusScanner();
   }
 
   // Validate address if the box is open and the button is visibile
@@ -340,11 +370,17 @@ const checkState = (printable) => {
     );
 
     
-    if (isReadyToShip && !has_clicked_print_already && printable) {
+if (isReadyToShip && !has_clicked_print_already && printable) {
       console.log("✅ Ship Button is Green and Active! Clicking...");
       has_clicked_print_already = true;
+      
       // Check for duplicates
-      last_y_code = order_id.value.trim();
+      if (!is2DVersion) {
+        // Only scrape the DOM for the y_code if we are on the 1D version
+        last_y_code = order_id.value.trim();
+      }
+      // If we are on the 2D version, last_y_code is already set by the scanner interception
+      
       last_processed_name = getFormattedName();
       if (!detectDuplicates()) {
         print_button.click();
@@ -383,6 +419,36 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
     return true; // Keeps the communication line open for async response
 });
+
+// --- 2D Barcode Interception ---
+if (is2DVersion && scan_text_area) {
+  
+  const extractYCode = (rawData) => {
+    if (!rawData) return;
+    // Split the tilde-delimited barcode string
+    const parts = rawData.split('~');
+    // Find the section that begins with 'y' (or 'Y')
+    const yCode = parts.find(p => p.toLowerCase().startsWith('y') && p.length == 11);
+    
+    if (yCode) {
+      last_y_code = yCode;
+      console.log("Extracted 2D y_code:", last_y_code);
+    }
+  };
+
+  scan_text_area.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      console.log("Intercepted Raw 2D Scan:", event.target.value);
+      extractYCode(event.target.value);
+    }
+  }, { capture: true }); 
+
+  scan_text_area.addEventListener('paste', (event) => {
+    const pastedData = (event.clipboardData || window.clipboardData).getData('text');
+    console.log("Intercepted Pasted 2D Scan:", pastedData);
+    extractYCode(pastedData);
+  }, { capture: true });
+}
 
 /**
  * Observer Setup
