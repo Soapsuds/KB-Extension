@@ -62,6 +62,44 @@ let last_processed_name = "";
 // disable animations
 //jQuery.fx.off = true;
 
+/**
+ * Formats and logs/copies the processed names list
+ */
+const exportNamesForExcel = () => {
+    if (processed_names.length === 0) {
+        console.log("The list is currently empty.");
+        return;
+    }
+
+    // Join the array with a newline and 4 spaces for indentation
+    const listBody = processed_names.join('\n    ');
+
+    // Wrap in the template literal structure you requested
+    const exportString = `const externalListRaw = \`
+    ${listBody}
+  \`;`;
+
+    // 1. Output to console (so you can right-click > copy)
+    console.log("%c --- Export Ready ---", "color: #4CAF50; font-weight: bold;");
+    console.log(exportString);
+
+    // 2. Automatically copy to clipboard
+    copyToClipboard(exportString);
+};
+
+/**
+ * Helper to copy text to the clipboard
+ */
+const copyToClipboard = (text) => {
+    const el = document.createElement('textarea');
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    console.log("✅ List copied to clipboard! You can now paste it into your Excel script.");
+};
+
 const detectDuplicates = () => {
   if (processed_y_codes.has(last_y_code)) {
     alert(
@@ -87,24 +125,28 @@ const getNames = () => {
   }
 }
 
-// take part 0 (first name)
-// add all the other parts together if needed
-// all other parts go in front, followed by [, ] then part 0  
 const commitName = () => {
-  name_array = last_processed_name.split(" ");
-  let first_name = name_array[0]
-  let last_name = name_array[1]
-  let size = name_array.length
-  if (size > 2) {
-    let i = 2;
-    while (i < size) {
-      last_name = last_name.concat(" ", name_array[i++])
+    if (!last_processed_name) return;
+
+    const name_array = last_processed_name.split(" ");
+    
+    // If it's just one word, we can't really split it
+    if (name_array.length < 2) {
+        processed_names.push(last_processed_name);
+        return;
     }
-  }
-  
-  let last_name_first = last_name + ", " + first_name
-  processed_names.push(last_name_first);
-}
+
+    // Use Destructuring: Grab the first element, and gather the rest into an array
+    const [firstName, ...lastNameParts] = name_array;
+    
+    // Join the remaining parts back together with spaces
+    const lastName = lastNameParts.join(" ");
+    
+    const formattedName = `${lastName}, ${firstName}`;
+    
+    processed_names.push(formattedName);
+    console.log(`Saved: ${formattedName}`);
+};
 
 const commitOrderId = () => {
   if (last_y_code == '') {
@@ -233,7 +275,8 @@ const handleErrors = () => {
 /**
  * Main State Controller
  */
-const checkState = () => {
+const checkState = (printable) => {
+  console.log(scan_text_area.value)
   // Run the error handler first
   let error_report = handleErrors();
   if (error_report == 1) {
@@ -292,9 +335,12 @@ const checkState = () => {
       isReadyToShip,
       "has clicked print already is: ",
       has_clicked_print_already,
+      "Printable was",
+      printable,
     );
 
-    if (isReadyToShip && !has_clicked_print_already) {
+    
+    if (isReadyToShip && !has_clicked_print_already && printable) {
       console.log("✅ Ship Button is Green and Active! Clicking...");
       has_clicked_print_already = true;
       // Check for duplicates
@@ -317,6 +363,27 @@ const checkState = () => {
   }
 };
 
+// content.js
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === "GET_PROCESSED_NAMES") {
+        
+        // Format the array into your specific template string
+        const listBody = processed_names.join('\n    ');
+        
+        const exportString = `const externalListRaw = \`
+    ${listBody}
+  \`;`;
+
+        // Send the formatted string back to the popup
+        sendResponse({ 
+            data: exportString, 
+            count: processed_names.length 
+        });
+    }
+    return true; // Keeps the communication line open for async response
+});
+
 /**
  * Observer Setup
  */
@@ -328,10 +395,19 @@ const checkEnabledAndRun = () => {
   });
 };
 
+let settlingTimer = null;
+let printable = false
+
 const observer = new MutationObserver(() => {
+  clearTimeout(settlingTimer);
+  printable = false
+  settlingTimer = setTimeout(() => {
+    printable = true;
+    checkState(printable)
+  }, 200);
   chrome.storage.local.get(["enabled"], (result) => {
     if (result.enabled) {
-      checkState();
+      checkState(printable);
     }
   });
 });

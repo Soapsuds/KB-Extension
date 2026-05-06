@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SendPro Automation Tool",
-  "version": "0.3",
+  "version": "0.31",
   "description": "Automates actions on Pitney Bowes.",
   "permissions": ["storage", "scripting", "activeTab"],
   "icons": {
