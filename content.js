@@ -399,25 +399,20 @@ if (isReadyToShip && !has_clicked_print_already && printable) {
   }
 };
 
-// content.js
-
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "GET_PROCESSED_NAMES") {
         
-        // Format the array into your specific template string
-        const listBody = processed_names.join('\n    ');
-        
-        const exportString = `const externalListRaw = \`
-    ${listBody}
-  \`;`;
+        // 1. Join with only a newline (no extra code or spaces)
+        // This creates a clean "Name, Name" list
+        const cleanList = processed_names.join('\n');
 
-        // Send the formatted string back to the popup
+        // 2. Send the raw list back to the popup
         sendResponse({ 
-            data: exportString, 
+            data: cleanList, 
             count: processed_names.length 
         });
     }
-    return true; // Keeps the communication line open for async response
+    return true; 
 });
 
 // --- 2D Barcode Interception ---
