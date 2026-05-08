@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "SendPro Automation Tool",
-  "version": "0.31",
-  "description": "Automates actions on Pitney Bowes.",
+  "name": "Kristian's Automation Tool",
+  "version": "0.35",
+  "description": "Automates actions on our preferred shipping software.",
   "permissions": ["storage", "scripting", "activeTab"],
   "icons": {
     "16": "icons/icon16.png",
