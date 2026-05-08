@@ -469,7 +469,11 @@ const observer = new MutationObserver(() => {
   printable = false
   settlingTimer = setTimeout(() => {
     printable = true;
-    checkState(printable)
+      chrome.storage.local.get(["enabled"], (result) => {
+    if (result.enabled) {
+      checkState(printable);
+    }
+  });
   }, 200);
   chrome.storage.local.get(["enabled"], (result) => {
     if (result.enabled) {
