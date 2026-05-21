@@ -42,6 +42,7 @@ const ZIP_CODE_ID = "#ship-to-zip";
 // name
 const SHIP_TO_NAME_ID = "#ship-to-company";
 const CARRIER_SELECTOR = "#CarrierService > div > select.carrier-dd";
+const ADDRESS_SELECTOR = "#ship-to-address-1"
 
 // constant buttons and parents
 const print_button_parent = document.querySelector(PRINT_BUTTON_PARENT_DIV);
@@ -51,6 +52,7 @@ const scan_text_area = document.querySelector(SCAN_TEXT_AREA_ID);
 const zip_text = document.querySelector(ZIP_CODE_ID);
 const order_id = document.querySelector(ORDER_ID);
 const nameField = document.querySelector(SHIP_TO_NAME_ID);
+const address_field = document.querySelector(ADDRESS_SELECTOR)
 
 
 const processed_y_codes = new Set();
