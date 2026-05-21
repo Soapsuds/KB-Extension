@@ -54,6 +54,9 @@ const order_id = document.querySelector(ORDER_ID);
 const nameField = document.querySelector(SHIP_TO_NAME_ID);
 const address_field = document.querySelector(ADDRESS_SELECTOR)
 
+// Address Selector
+const ADDRESS_LINE_1 = "#ship-to-address-1";
+
 
 const processed_y_codes = new Set();
 const processed_names = new Array();
@@ -378,6 +381,24 @@ const checkState = (printable) => {
     
 if (isReadyToShip && !has_clicked_print_already && printable) {
       console.log("✅ Ship Button is Green and Active!");
+      // --- PO Box Validation Check ---
+      const addressInput = document.querySelector(ADDRESS_LINE_1);
+      if (addressInput && addressInput.value) {
+        // Regex matches: PO BOX, P.O. Box, POBOX, P O BOX, etc. (case-insensitive)
+        const poBoxRegex = /p\s*\.?\s*o\s*\.?\s*box/i;
+        
+        if (poBoxRegex.test(addressInput.value)) {
+          // If the scan requires FedEx OR the dropdown is already set to FedEx
+          if (requires_fedex || selectedCarrierText.includes("fedex")) {
+            console.log("POBOX with FedEx detected. Halt automation")
+              alert(
+                "This is a being sent FedEx, but the address is a PO BOX! This is not deliverable! Please have someone fix the address",
+              );
+            return; // Stops the click
+          }
+        }
+      }
+
       // --- Carrier Validation Check ---
       if (requires_fedex) {
         const carrierDropdown = document.querySelector(CARRIER_SELECTOR);
@@ -385,6 +406,9 @@ if (isReadyToShip && !has_clicked_print_already && printable) {
           const selectedText = carrierDropdown.options[carrierDropdown.selectedIndex].text.toLowerCase();
           
           if (!selectedText.includes("fedex")) {
+            alert(
+              "This shipment reported it needs to be sent FedEx, but FedEx is not selected! DO NOT SHIP without correcting, and show Kristian!",
+            );
             console.log("⚠️ WARNING: Barcode requires FedEx, but a different carrier is selected. Halting automation.");
             return; // Stops the function here so print_button.click() is never reached
           }
