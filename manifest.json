@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Kristian's Automation Tool",
-  "version": "0.35",
+  "version": "0.36",
   "description": "Automates actions on our preferred shipping software.",
   "permissions": ["storage", "scripting", "activeTab"],
   "icons": {
