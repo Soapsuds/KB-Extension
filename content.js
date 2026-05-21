@@ -41,6 +41,7 @@ const ZIP_CODE_ID = "#ship-to-zip";
 
 // name
 const SHIP_TO_NAME_ID = "#ship-to-company";
+const CARRIER_SELECTOR = "#CarrierService > div > select.carrier-dd";
 
 // constant buttons and parents
 const print_button_parent = document.querySelector(PRINT_BUTTON_PARENT_DIV);
@@ -51,6 +52,7 @@ const zip_text = document.querySelector(ZIP_CODE_ID);
 const order_id = document.querySelector(ORDER_ID);
 const nameField = document.querySelector(SHIP_TO_NAME_ID);
 
+
 const processed_y_codes = new Set();
 const processed_names = new Array();
 
@@ -59,6 +61,7 @@ let has_clicked_print_already = false;
 
 let last_y_code = "";
 let last_processed_name = "";
+let requires_fedex = false;
 
 // disable animations
 //jQuery.fx.off = true;
@@ -323,6 +326,7 @@ const checkState = (printable) => {
   ) {
     console.log("❌ Ship Button disabled. Resetting latch.");
     has_clicked_print_already = false;
+    requires_fedex = false;
     commitOrderId();
     commitName();
     refocusScanner();
@@ -371,7 +375,19 @@ const checkState = (printable) => {
 
     
 if (isReadyToShip && !has_clicked_print_already && printable) {
-      console.log("✅ Ship Button is Green and Active! Clicking...");
+      console.log("✅ Ship Button is Green and Active!");
+      // --- Carrier Validation Check ---
+      if (requires_fedex) {
+        const carrierDropdown = document.querySelector(CARRIER_SELECTOR);
+        if (carrierDropdown && carrierDropdown.options.length > 0) {
+          const selectedText = carrierDropdown.options[carrierDropdown.selectedIndex].text.toLowerCase();
+          
+          if (!selectedText.includes("fedex")) {
+            console.log("⚠️ WARNING: Barcode requires FedEx, but a different carrier is selected. Halting automation.");
+            return; // Stops the function here so print_button.click() is never reached
+          }
+        }
+      }
       has_clicked_print_already = true;
       
       // Check for duplicates
@@ -420,6 +436,13 @@ if (is2DVersion && scan_text_area) {
   
   const extractYCode = (rawData) => {
     if (!rawData) return;
+    // Check if the barcode specifies FedEx
+    if (rawData.toLowerCase().includes("fedex")) {
+      requires_fedex = true;
+      console.log("📦 Flag raised: FedEx shipping required for this order.");
+    } else {
+      requires_fedex = false;
+    }
     // Split the tilde-delimited barcode string
     const parts = rawData.split('~');
     // Find the section that begins with 'y' (or 'Y')
