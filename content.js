@@ -387,6 +387,21 @@ if (isReadyToShip && !has_clicked_print_already && printable) {
         }
       }
 
+      // --- State Validation Check ---
+      const stateInput = document.querySelector("#ship-to-state");
+      if (stateInput && stateInput.value) {
+        const allowedStates = ['UT', 'NV', 'ID', 'WY'];
+        const currentState = stateInput.value.trim().toUpperCase();
+        
+        if (!allowedStates.includes(currentState)) {
+          console.log(`Invalid State detected: ${currentState}. Halt automation`);
+          alert(
+            `This shipment is going to ${currentState}, but we only ship to UT, NV, ID, and WY! Please verify the address before shipping.`
+          );
+          return; // Stops the click
+        }
+      }
+
       // --- Carrier Validation Check ---
       if (requires_fedex) {
         const carrierDropdown = document.querySelector(CARRIER_SELECTOR);
@@ -470,14 +485,35 @@ if (is2DVersion && scan_text_area) {
 
   scan_text_area.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
-      console.log("Intercepted Raw 2D Scan:", event.target.value);
-      extractYCode(event.target.value);
+      const rawData = event.target.value.trim();
+      console.log("Intercepted Raw 2D Scan:", rawData);
+
+      // Strict validation: must start with 90~ and end with ~ and 8 digits
+      const isValid = /^90~.*~\d{8}$/.test(rawData);
+      if (!isValid) {
+        alert("Invalid barcode format detected. The scan data may be polluted with existing text. Please clear the field and scan again.");
+        event.preventDefault();
+        event.stopPropagation();
+        event.target.value = ""; // Clear the bad scan
+        return;
+      }
+
+      extractYCode(rawData);
     }
   }, { capture: true }); 
 
   scan_text_area.addEventListener('paste', (event) => {
-    const pastedData = (event.clipboardData || window.clipboardData).getData('text');
+    const pastedData = (event.clipboardData || window.clipboardData).getData('text').trim();
     console.log("Intercepted Pasted 2D Scan:", pastedData);
+
+    const isValid = /^90~.*~\d{8}$/.test(pastedData);
+    if (!isValid) {
+      alert("Invalid barcode format detected. The pasted data may be polluted with existing text.");
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
     extractYCode(pastedData);
   }, { capture: true });
 }
