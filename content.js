@@ -26,7 +26,6 @@ const ORDER_ID = "#search-for-order-input"; // will need adjustment for 2d
 // zip code field
 const ZIP_CODE_ID = "#ship-to-zip";
 
-
 // name
 const SHIP_TO_NAME_ID = "#ship-to-company";
 const CARRIER_SELECTOR = "#CarrierService > div > select.carrier-dd";
@@ -491,7 +490,6 @@ if (is2DVersion && scan_text_area) {
       // Strict validation: must start with 90~ and end with ~ and 8 digits
       const isValid = /^90~.*~\d{8}$/.test(rawData);
       if (!isValid) {
-        alert("Invalid barcode format detected. The scan data may be polluted with existing text. Please clear the field and scan again.");
         event.preventDefault();
         event.stopPropagation();
         event.target.value = ""; // Clear the bad scan
@@ -508,7 +506,6 @@ if (is2DVersion && scan_text_area) {
 
     const isValid = /^90~.*~\d{8}$/.test(pastedData);
     if (!isValid) {
-      alert("Invalid barcode format detected. The pasted data may be polluted with existing text.");
       event.preventDefault();
       event.stopPropagation();
       return;
@@ -542,7 +539,7 @@ const observer = new MutationObserver(() => {
       checkState(printable);
     }
   });
-  }, 200);
+  }, 450);
   chrome.storage.local.get(["enabled"], (result) => {
     if (result.enabled) {
       checkState(printable);
