@@ -1,15 +1,3 @@
-/*
-Unfortunately, the 2d version doesn't put the order ID (y code) anywhere on the page
-I may be able to extract it if I can find the correct time to grab data from the scan field,
-but I'd need some special logic depending on which version is runninng. 
-
-For now, I've made it so that if the y code is '' it just skips commiting the barcode.
-Maybe I can make it check for duplicates differently? Or I need to figure out how to 
-grab the y code from the scan.  
-
-Maybe just focus on 1d for now? IDK
-*/
-
 const VALIDATE_PARENT_DIV = "#Snippet3";
 const UPDATE_ADDRESS_BUTTON = "#select-alternative-address";
 // Validate button is always ID:validate. Class can be class="validate" class="validate valid" class="validate invalid"
