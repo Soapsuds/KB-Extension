@@ -368,6 +368,13 @@ const checkState = (printable) => {
     
 if (isReadyToShip && !has_clicked_print_already && printable) {
       console.log("✅ Ship Button is Green and Active!");
+
+      // Get selected carrier text
+      const carrierDropdown = document.querySelector(CARRIER_SELECTOR);
+      const selectedCarrierText = (carrierDropdown && carrierDropdown.options.length > 0 && carrierDropdown.selectedIndex >= 0)
+        ? carrierDropdown.options[carrierDropdown.selectedIndex].text.toLowerCase()
+        : "";
+
       // --- PO Box Validation Check ---
       const addressInput = document.querySelector(ADDRESS_LINE_1);
       if (addressInput && addressInput.value) {
@@ -403,17 +410,12 @@ if (isReadyToShip && !has_clicked_print_already && printable) {
 
       // --- Carrier Validation Check ---
       if (requires_fedex) {
-        const carrierDropdown = document.querySelector(CARRIER_SELECTOR);
-        if (carrierDropdown && carrierDropdown.options.length > 0) {
-          const selectedText = carrierDropdown.options[carrierDropdown.selectedIndex].text.toLowerCase();
-          
-          if (!selectedText.includes("fedex")) {
-            alert(
-              "This shipment reported it needs to be sent FedEx, but FedEx is not selected! DO NOT SHIP without correcting, and show Kristian!",
-            );
-            console.log("⚠️ WARNING: Barcode requires FedEx, but a different carrier is selected. Halting automation.");
-            return; // Stops the function here so print_button.click() is never reached
-          }
+        if (!selectedCarrierText.includes("fedex")) {
+          alert(
+            "This shipment reported it needs to be sent FedEx, but FedEx is not selected! DO NOT SHIP without correcting, and show Kristian!",
+          );
+          console.log("⚠️ WARNING: Barcode requires FedEx, but a different carrier is selected. Halting automation.");
+          return; // Stops the function here so print_button.click() is never reached
         }
       }
       has_clicked_print_already = true;
